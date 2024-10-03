@@ -1,23 +1,22 @@
 class Pegging:
-    """ The history of cards played during the pegging phase of a hand. """
+    """The history of cards played during the pegging phase of a hand."""
 
     def __init__(self):
-        """ Creates an empty pegging history. """
+        """Creates an empty pegging history."""
         self._prev_round = None
         self._prev_play = None
         self._card = None
         self._player = None
         self._passed = [False, False]
         self._total = 0
-        
 
     def play(self, game, card, player):
-        """ Returns the pegging history and score resulting from the given player
-            playing the given card after this history.
+        """Returns the pegging history and score resulting from the given player
+        playing the given card after this history.
 
-            game -- a Cribbage game
-            card -- a legal card to play for the given player
-            player -- 0 or 1 for the dealer or other player, respectively
+        game -- a Cribbage game
+        card -- a legal card to play for the given player
+        player -- 0 or 1 for the dealer or other player, respectively
         """
         result = Pegging()
 
@@ -42,48 +41,43 @@ class Pegging:
 
         return result, self.score(game, card, player)
 
-
     def is_start_round(self):
-        """ Determines if this pegging history represents the start
-            of a round of pegging.
+        """Determines if this pegging history represents the start
+        of a round of pegging.
         """
         return self._total == 0
-    
 
     def total_points(self):
-        """ Returns the current total points in the current round of
-            pegging in this history.
+        """Returns the current total points in the current round of
+        pegging in this history.
         """
         return self._total
 
-
     def has_passed(self, player):
-        """ Determines if this given player has passed in the current
-            round of pegging in this history.
+        """Determines if this given player has passed in the current
+        round of pegging in this history.
 
-            player -- 0 or 1 for the dealer and non-dealer respectively
+        player -- 0 or 1 for the dealer and non-dealer respectively
         """
         return self._passed[player]
 
-
     def is_legal(self, game, card, player):
-        """ Determines if it is legal for the player to play the given
-            card.  This assumes the player has the card available to play.
+        """Determines if it is legal for the player to play the given
+        card.  This assumes the player has the card available to play.
 
-            game -- a cribbage game
-            card -- a card
-            player -- 0 for the dealer or 1 for the non-dealer
+        game -- a cribbage game
+        card -- a card
+        player -- 0 for the dealer or 1 for the non-dealer
         """
         return self._total + game.rank_value(card.rank()) <= game.pegging_limit()
 
-
     def has_legal_play(self, game, hand, player):
-        """ Determines if the given hand contains a legal play for the given
-            player.
+        """Determines if the given hand contains a legal play for the given
+        player.
 
-            game -- a cribbage game
-            hand -- an interable over cards
-            player -- 0 for the dealer or 1 for the non-dealer
+        game -- a cribbage game
+        hand -- an interable over cards
+        player -- 0 for the dealer or 1 for the non-dealer
         """
         if self._passed[player]:
             return False
@@ -92,17 +86,16 @@ class Pegging:
                 if self.is_legal(game, card, player):
                     return True
             return False
-            
-    
-    def score(self, game, card, player):
-        """ Returns the score earned by the given player when playing the given card
-            (or None for "go").
-            The score is negative to indicate that the other player scores points (as for a "go")
-            and None if the play is illegal.
 
-            game -- a Cribbage game
-            card -- a (rank, suit) pair, or None
-            player -- 0 or 1 for the dealer and non-dealer respectively
+    def score(self, game, card, player):
+        """Returns the score earned by the given player when playing the given card
+        (or None for "go").
+        The score is negative to indicate that the other player scores points (as for a "go")
+        and None if the play is illegal.
+
+        game -- a Cribbage game
+        card -- a (rank, suit) pair, or None
+        player -- 0 or 1 for the dealer and non-dealer respectively
         """
         if card is None:
             if self._passed[player]:
@@ -137,10 +130,12 @@ class Pegging:
         doubles = False
         ranks_seen = set()
         ranks_seen.add(card.rank())
-        while curr is not None and (count == 0 or curr_matches == max_matches or not doubles):
+        while curr is not None and (
+            count == 0 or curr_matches == max_matches or not doubles
+        ):
             if curr._card is not None:
                 count += 1
-                
+
                 if curr._card.rank() == card.rank():
                     # ranks match
                     if curr_matches != -1:
@@ -160,7 +155,6 @@ class Pegging:
                 if max_rank - min_rank + 1 == count and not doubles:
                     max_straight = count
 
-
             curr = curr._prev_play
 
         pair_score = game.peg_pair_value(max_matches)
@@ -170,9 +164,8 @@ class Pegging:
             thirtyone_score = game.pegging_exact_value(self._passed[1 - player])
         else:
             thirtyone_score = 0
-        
-        return pair_score + straight_score + fifteen_score + thirtyone_score
 
+        return pair_score + straight_score + fifteen_score + thirtyone_score
 
     def plays(self):
         history = []
@@ -192,5 +185,3 @@ class Pegging:
             history.append(list(reversed(curr_round)))
 
         return list(reversed(history))
-    
-        

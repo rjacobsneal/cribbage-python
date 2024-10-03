@@ -3,7 +3,13 @@ import time
 import math
 import itertools as it
 
-from policy import CompositePolicy, RandomThrower, RandomPegger, GreedyThrower, GreedyPegger
+from policy import (
+    CompositePolicy,
+    RandomThrower,
+    RandomPegger,
+    GreedyThrower,
+    GreedyPegger,
+)
 from cribbage import Game, evaluate_policies
 from my_policy import MyPolicy
 
@@ -12,11 +18,11 @@ if __name__ == "__main__":
     run_time = 0
     if len(sys.argv) > 1:
         if sys.argv[1] == "--time":
-            run_time = int(sys.argv[2]);
+            run_time = int(sys.argv[2])
             games = 1000
         else:
             games = int(sys.argv[1])
-    
+
     game = Game()
     benchmark = CompositePolicy(game, GreedyThrower(game), GreedyPegger(game))
     submission = MyPolicy(game)
@@ -36,7 +42,7 @@ if __name__ == "__main__":
     mean = sum_values / total_games
     variance = sum_squares / total_games - math.pow(sum_values / total_games, 2)
     stddev = math.sqrt(variance)
-    
+
     print("NET:", mean)
     print("CONF:", mean - 2 * (stddev / math.sqrt(total_games)))
     print(results)

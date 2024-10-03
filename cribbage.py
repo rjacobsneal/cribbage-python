@@ -3,68 +3,62 @@ import sys
 import copy
 
 import scoring
-from deck import Deck,Card
+from deck import Deck, Card
 from pegging import Pegging
+
 
 class Game:
     def __init__(self):
         # make this a tuple so it is immutable and so doesn't need to be copied
         # in the accessor?
-        self._throw_indices = list(it.combinations(range(self.keep_cards() + self.throw_cards()), self.throw_cards()))
+        self._throw_indices = list(
+            it.combinations(
+                range(self.keep_cards() + self.throw_cards()), self.throw_cards()
+            )
+        )
 
-        
     def all_ranks(self):
         return range(1, 14)
 
-    
     def all_suits(self):
-        return ['S', 'H', 'D', 'C']
-
+        return ["S", "H", "D", "C"]
 
     def rank_value(self, rank):
-        """ Returns the pegging value of the given rank in this game.
+        """Returns the pegging value of the given rank in this game.
 
-            rank -- an integer from 1 (A) to 13 (K)
+        rank -- an integer from 1 (A) to 13 (K)
         """
         return min(rank, 10)
 
-    
     def all_values(self):
         return range(1, 11)
 
-    
     def fifteen_value(self):
         return 2
 
-    
     def pair_value(self):
         return 2
 
-
     def turn_card_value(self, card):
         return 2 if card.rank() == 11 else 0
-    
-    
+
     def straight_value(self, length, count):
         if length >= 3:
             return length * count
         else:
             return 0
 
-
     def nob_value(self, card, turn):
         if turn is not None and card.rank() == 11 and card.suit() == turn.suit():
             return 1
         else:
             return 0
-        
-    
+
     def hand_flush_value(self, size):
         if size >= 4:
             return size
         else:
             return 0
-
 
     def turn_flush_value(self, size):
         if size >= 5:
@@ -72,27 +66,21 @@ class Game:
         else:
             return 0
 
-
     def keep_cards(self):
         return 4
-
 
     def throw_cards(self):
         return 2
 
-
     def throw_indices(self):
         return self._throw_indices[:]
-    
-    
+
     def pegging_limit(self):
         return 31
-
 
     def pegging_exact_value(self, go):
         return 1 if go else 2
 
-        
     def peg_pair_value(self, count):
         if count < 2:
             return 0
@@ -103,28 +91,24 @@ class Game:
         elif count == 4:
             return 12
 
-
     def peg_straight_value(self, length):
         return 0 if length < 3 else length
 
-        
     def peg_sum_value(self, total):
         return 2 if total == 15 else 0
-    
 
     def winning_score(self):
         return 121
 
-
     def game_value(self, p0_score, p1_score):
-        """ Returns the point value of the game ending with the
-            given score.  Positive indicates points won by P0;
-            negative indicates points won by P1.  If neither player
-            has reached the threshold required to win, then the
-            return value is 0.
+        """Returns the point value of the game ending with the
+        given score.  Positive indicates points won by P0;
+        negative indicates points won by P1.  If neither player
+        has reached the threshold required to win, then the
+        return value is 0.
 
-            p0_score -- an integer
-            p1_score -- an integer
+        p0_score -- an integer
+        p1_score -- an integer
         """
         if max(p0_score, p1_score) < self.winning_score():
             # no winner yet
@@ -142,22 +126,19 @@ class Game:
 
             return points * (1 if p0_score > p1_score else -1)
 
-        
     def deck(self):
         return Deck(self.all_ranks(), self.all_suits(), 1)
-    
-        
+
     def deal(self, count):
         deck = Deck(self.all_ranks(), self.all_suits(), 1)
         deck.shuffle()
         return deck.deal(count)
 
-
     def is_legal_split(self, hand, split):
-        """ Determines if split is a partition of hand.
+        """Determines if split is a partition of hand.
 
-            hand -- an iterable over cards
-            split -- an iterable over iterables of cards
+        hand -- an iterable over cards
+        split -- an iterable over iterables of cards
         """
         # count cards in hand
         card_count = dict()
@@ -179,7 +160,6 @@ class Game:
 
         # if no problems yet, everything must have matched
         return part_size == len(hand)
-    
 
     def play(self, p0_policy, p1_policy, log, initial=(0, 0)):
         scores = list(initial)
@@ -190,7 +170,7 @@ class Game:
 
         # loop until one player has points to win
         while max(scores) < self.winning_score():
-            score_by_turn.append((tuple(scores) , dealer))
+            score_by_turn.append((tuple(scores), dealer))
             log("Score: " + str(scores))
             # deal cards
             per_player = self.keep_cards() + self.throw_cards()
@@ -198,11 +178,14 @@ class Game:
             hands = [in_play[per_player * p : per_player * (p + 1)] for p in [0, 1]]
             handsPlayed += 1
             turn = in_play[-1]
-            keeps = [policies[p].keep(copy.deepcopy(hands[p]),
-                                      scores[:] if p == 0
-                                               else list(reversed(scores)),
-                                      dealer == p)
-                     for p in [0, 1]]
+            keeps = [
+                policies[p].keep(
+                    copy.deepcopy(hands[p]),
+                    scores[:] if p == 0 else list(reversed(scores)),
+                    dealer == p,
+                )
+                for p in [0, 1]
+            ]
 
             # check that policy's action is a partition of the hand
             for p in [0, 1]:
@@ -210,7 +193,7 @@ class Game:
                     raise Exception("split does not partition hand")
                 if len(keeps[p][1]) != self.throw_cards():
                     raise Exception("discarded {n} cards".format(n=len(keeps[p][1])))
-                
+
             scores[dealer] += self.turn_card_value(turn)
             log("Turn: " + str(turn) + " " + str(scores))
 
@@ -221,16 +204,29 @@ class Game:
             history = Pegging()
             played = 0
             last_played = 0
-            while max(scores) < self.winning_score() and (sum(len(cards) for cards in peg_cards) > 0 or not history.is_start_round()):
+            while max(scores) < self.winning_score() and (
+                sum(len(cards) for cards in peg_cards) > 0
+                or not history.is_start_round()
+            ):
                 if not passes[peg_turn]:
-                    play = policies[peg_turn].peg(copy.deepcopy(peg_cards[peg_turn]), history, turn, scores[:] if peg_turn == 0 else list(reversed(scores)), dealer == peg_turn)
+                    play = policies[peg_turn].peg(
+                        copy.deepcopy(peg_cards[peg_turn]),
+                        history,
+                        turn,
+                        scores[:] if peg_turn == 0 else list(reversed(scores)),
+                        dealer == peg_turn,
+                    )
 
                     # check legality of play
-                    if play is None and history.has_legal_play(self, peg_cards[peg_turn], 0 if peg_turn == dealer else 1):
+                    if play is None and history.has_legal_play(
+                        self, peg_cards[peg_turn], 0 if peg_turn == dealer else 1
+                    ):
                         raise Exception("passing when has legal play")
-                    elif play is not None and not history.is_legal(self, play, 0 if peg_turn == dealer else 1):
+                    elif play is not None and not history.is_legal(
+                        self, play, 0 if peg_turn == dealer else 1
+                    ):
                         raise Exception("invalid card")
-                    
+
                     if play is None:
                         passes[peg_turn] = True
                     else:
@@ -239,7 +235,9 @@ class Game:
                     play = None
 
                 log(play)
-                history, score = history.play(self, play, 0 if peg_turn == dealer else 1)
+                history, score = history.play(
+                    self, play, 0 if peg_turn == dealer else 1
+                )
                 if score > 0:
                     scores[peg_turn] += score
                     log(scores)
@@ -252,12 +250,12 @@ class Game:
                     new_cards = [card for card in peg_cards[peg_turn] if card != play]
                     if len(new_cards) == len(peg_cards[peg_turn]):
                         raise Exception("played card not in hand")
-                    
+
                     peg_cards[peg_turn] = new_cards
-                    
+
                 # next player's turn
                 peg_turn = 1 - peg_turn
-                
+
                 if sum(1 if passed else 0 for passed in passes) == 2:
                     # both players passed; reset for next round of pegging
                     passes = [False, False]
@@ -285,10 +283,10 @@ class Game:
                 log("CRIB: " + str(crib) + str(hand_score))
                 scores[dealer] += hand_score[0]
                 log(scores)
-            
+
             dealer = 1 - dealer
-        score_by_turn.append((tuple(scores) , dealer))
-            
+        score_by_turn.append((tuple(scores), dealer))
+
         return self.game_value(*scores), handsPlayed, score_by_turn
 
 
@@ -320,7 +318,13 @@ def evaluate_policies(game, p0_policy, p1_policy, count):
             p0_total += p0_pts
         else:
             p1_total += -p0_pts
-            
+
         total_hands += results[1]
 
-    return (p0_total - p1_total) / count, p0_total / count, p1_total / count, scores, total_hands / count
+    return (
+        (p0_total - p1_total) / count,
+        p0_total / count,
+        p1_total / count,
+        scores,
+        total_hands / count,
+    )

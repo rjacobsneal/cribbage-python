@@ -1,2 +1,2 @@
 #!/bin/bash
-python3 test_cribbage.py "$@"
+pypy3 test_cribbage.py "$@"
